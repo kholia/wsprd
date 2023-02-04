@@ -5,10 +5,10 @@ OBJECTS = \
   kiss_fft.c kiss_fftr.c
 
 CC = gcc
-LD = gcc
+LD = gcc -fsanitize=address
 RM = rm -f
 
-CFLAGS = -Wall -O0 -funroll-loops -ffast-math -fsingle-precision-constant -g -ggdb -Wno-unused-result
+CFLAGS = -Wall -O3 -funroll-loops -ffast-math -fsingle-precision-constant -g -fsanitize=address -Wno-unused-result
 
 all: $(TARGET)
 
