@@ -27,10 +27,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "wsprd_utils.h"
-
-#ifndef int32_t
-#define int32_t int
-#endif
+#include "nhash.h"
 
 void unpack50( signed char *dat, int32_t *n1, int32_t *n2 )
 {

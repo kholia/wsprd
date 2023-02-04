@@ -8,7 +8,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <time.h>
-#include "nhash.h"
 
 void unpack50( signed char *dat, int32_t *n1, int32_t *n2 );
 

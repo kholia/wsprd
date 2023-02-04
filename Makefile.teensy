@@ -1,0 +1,44 @@
+# https://github.com/arduino/arduino-cli/releases
+
+# port := $(shell python3 board_detect.py)
+
+TARGET?="/dev/ttyACM0"
+
+default:
+	@# echo $(port)
+	mkdir -p ~/.local/bin
+	# arduino-cli config init --overwrite
+	# arduino-cli core update-index
+	# arduino-cli core install teensy:avr
+	# arduino-cli lib install "TinyGPSPlus"
+	# arduino-cli lib install "Etherkit JTEncode"
+	# arduino-cli lib install "Etherkit Si5351"
+	# arduino-cli lib install "RTClib"
+	# arduino-cli lib install "Time"
+	# arduino-cli lib install "Adafruit BusIO"
+	arduino-cli compile --fqbn=teensy:avr:teensy41:usb=serial2,speed=600,opt=o2std,keys=en-us,gdb=dual
+
+install_platform:
+	arduino-cli config init --overwrite
+	arduino-cli core update-index
+	arduino-cli core install rp2040:rp2040
+	arduino-cli core install teensy:avr
+	arduino-cli core install esp8266:esp8266
+	arduino-cli core install arduino:avr
+
+deps:
+	arduino-cli lib install "TinyGPSPlus"
+	arduino-cli lib install "Etherkit JTEncode"
+	arduino-cli lib install "Etherkit Si5351"
+	arduino-cli lib install "RTClib"
+	arduino-cli lib install "Time"
+	arduino-cli lib install "Adafruit BusIO"
+
+install_arduino_cli:
+	mkdir -p ~/.local/bin
+	curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=~/.local/bin sh
+
+
+setup:
+	sudo cp 00-teensy.rules /etc/udev/rules.d/
+	sudo udevadm control --reload-rules && sudo udevadm trigger
