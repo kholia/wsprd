@@ -150,10 +150,13 @@ int unpackgrid( int32_t ngrid, char *grid)
 int unpackpfx( int32_t nprefix, char *call)
 {
     char nc, pfx[4]={'\0'}, tmpcall[7];
+    char result[20];
     int i;
     int32_t n;
 
-    strcpy(tmpcall,call);
+    strncpy(tmpcall, call, sizeof(tmpcall) - 1);
+    tmpcall[sizeof(tmpcall) - 1] = '\0';
+
     if( nprefix < 60000 ) {
         // add a prefix of 1 to 3 characters
         n=nprefix;
@@ -172,31 +175,35 @@ int unpackpfx( int32_t nprefix, char *call)
         }
 
         char * p = strrchr(pfx,' ');
-        strcpy(call, p ? p + 1 : pfx);
-        strncat(call,"/",1);
-        strncat(call,tmpcall,strlen(tmpcall));
+        const char *prefix_start = p ? p + 1 : pfx;
+        snprintf(result, sizeof(result), "%s/%s", prefix_start, tmpcall);
+        strncpy(call, result, sizeof(result) - 1);
+        call[sizeof(result) - 1] = '\0';
 
     } else {
         // add a suffix of 1 or 2 characters
         nc=nprefix-60000;
         if( (nc >= 0) & (nc <= 9) ) {
             pfx[0]=nc+48;
-            strcpy(call,tmpcall);
-            strncat(call,"/",1);
-            strncat(call,pfx,1);
+            pfx[1]='\0';
+            snprintf(result, sizeof(result), "%s/%s", tmpcall, pfx);
+            strncpy(call, result, sizeof(result) - 1);
+            call[sizeof(result) - 1] = '\0';
         }
         else if( (nc >= 10) & (nc <= 35) ) {
             pfx[0]=nc+55;
-            strcpy(call,tmpcall);
-            strncat(call,"/",1);
-            strncat(call,pfx,1);
+            pfx[1]='\0';
+            snprintf(result, sizeof(result), "%s/%s", tmpcall, pfx);
+            strncpy(call, result, sizeof(result) - 1);
+            call[sizeof(result) - 1] = '\0';
         }
         else if( (nc >= 36) & (nc <= 125) ) {
             pfx[0]=(nc-26)/10+48;
             pfx[1]=(nc-26)%10+48;
-            strcpy(call,tmpcall);
-            strncat(call,"/",1);
-            strncat(call,pfx,2);
+            pfx[2]='\0';
+            snprintf(result, sizeof(result), "%s/%s", tmpcall, pfx);
+            strncpy(call, result, sizeof(result) - 1);
+            call[sizeof(result) - 1] = '\0';
         }
         else {
             return 0;
@@ -269,14 +276,8 @@ int unpk_(signed char *message, char *hashtab, char *loctab, char *call_loc_pow,
         int nu=ntype%10;
         if( nu == 0 || nu == 3 || nu == 7 ) {
             ndbm=ntype;
-            memset(call_loc_pow,0,sizeof(char)*23);
             sprintf(cdbm,"%2d",ndbm);
-            strncat(call_loc_pow,callsign,strlen(callsign));
-            strncat(call_loc_pow," ",1);
-            strncat(call_loc_pow,grid,4);
-            strncat(call_loc_pow," ",1);
-            strncat(call_loc_pow,cdbm,2);
-            strncat(call_loc_pow,"\0",1);
+            snprintf(call_loc_pow, 23, "%s %s %s", callsign, grid, cdbm);
             ihash=nhash(callsign,strlen(callsign),(uint32_t)146);
             strcpy(hashtab+ihash*13,callsign);
             strcpy(loctab+ihash*5,grid);
@@ -287,12 +288,8 @@ int unpk_(signed char *message, char *hashtab, char *loctab, char *call_loc_pow,
             n3=n2/128+32768*(nadd-1);
             if( !unpackpfx(n3,callsign) ) return 1;
             ndbm=ntype-nadd;
-            memset(call_loc_pow,0,sizeof(char)*23);
             sprintf(cdbm,"%2d",ndbm);
-            strncat(call_loc_pow,callsign,strlen(callsign));
-            strncat(call_loc_pow," ",1);
-            strncat(call_loc_pow,cdbm,2);
-            strncat(call_loc_pow,"\0",1);
+            snprintf(call_loc_pow, 23, "%s %s", callsign, cdbm);
             int nu=ndbm%10;
             if( nu == 0 || nu == 3 || nu == 7 || nu == 10 ) { //make sure power is OK
                 ihash=nhash(callsign,strlen(callsign),(uint32_t)146);
@@ -302,10 +299,10 @@ int unpk_(signed char *message, char *hashtab, char *loctab, char *call_loc_pow,
     } else if ( ntype < 0 ) {
         ndbm=-(ntype+1);
         memset(grid6,0,sizeof(char)*7);
-//        size_t len=strlen(callsign);
         size_t len=6;
-        strncat(grid6,callsign+len-1,1);
-        strncat(grid6,callsign,len-1);
+        grid6[0] = callsign[len-1];
+        strncpy(grid6+1, callsign, len-1);
+        grid6[len] = '\0';
         int nu=ndbm%10;
         if ((nu != 0 && nu != 3 && nu != 7 && nu != 10) ||
             !isalpha(grid6[0]) || !isalpha(grid6[1]) ||
@@ -323,15 +320,8 @@ int unpk_(signed char *message, char *hashtab, char *loctab, char *call_loc_pow,
             sprintf(callsign,"%5s","<...>");
         }
 
-        memset(call_loc_pow,0,sizeof(char)*23);
         sprintf(cdbm,"%2d",ndbm);
-        strncat(call_loc_pow,callsign,strlen(callsign));
-        strncat(call_loc_pow," ",1);
-        strncat(call_loc_pow,grid6,strlen(grid6));
-        strncat(call_loc_pow," ",1);
-        strncat(call_loc_pow,cdbm,2);
-        strncat(call_loc_pow,"\0",1);
-
+        snprintf(call_loc_pow, 23, "%s %s %s", callsign, grid6, cdbm);
 
         // I don't know what to do with these... They show up as "A000AA" grids.
         if( ntype == -64 ) noprint=1;
